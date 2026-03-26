@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0d14;
+    --surface: #111520;
+    --surface2: #161b28;
+    --border: rgba(255,255,255,0.07);
+    --border-active: rgba(59,130,246,0.5);
+    --accent: #3b82f6;
+    --accent2: #f97316;
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --glow-blue: rgba(59,130,246,0.15);
+    --glow-orange: rgba(249,115,22,0.15);
+    --card-h: 180px;
+  }
+ 
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+ 
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+ 
+  /* Sidebar */
+  .sidebar {
+    width: 64px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    gap: 6px;
+    z-index: 10;
+    position: relative;
+  }
+ 
+  .sidebar-logo {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    color: white;
+    box-shadow: 0 0 20px rgba(59,130,246,0.4);
+  }
+ 
+  .sidebar-btn {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    position: relative;
+  }
+  .sidebar-btn:hover, .sidebar-btn.active {
+    background: rgba(59,130,246,0.15);
+    color: var(--accent);
+  }
+  .sidebar-btn.active::before {
+    content: '';
+    position: absolute;
+    left: -1px; top: 25%; bottom: 25%;
+    width: 2px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+  .sidebar-btn svg { width: 18px; height: 18px; }
+ 
+  /* Main content */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+ 
+  /* Topbar */
+  .topbar {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+ 
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .logo-text span { color: var(--accent); }
+ 
+  .search-bar {
+    flex: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .search-bar input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 9px 16px 9px 40px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-bar input::placeholder { color: var(--text-muted); }
+  .search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); width: 16px; height: 16px;
+  }
+ 
+  .topbar-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 13px;
+    cursor: pointer;
+    border: 2px solid var(--border-active);
+  }
+ 
+  /* Nav tabs */
+  .nav-tabs {
+    height: 48px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 0;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+ 
+  .tab {
+    padding: 0 16px;
+    height: 100%;
+    display: flex; align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text-dim); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+ 
+  /* Content area */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 28px 40px;
+  }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+ 
+  /* Section */
+  .section { margin-bottom: 40px; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+ 
+  /* Grid layout: all sections side by side */
+  .all-sections {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+ 
+  .add-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .add-btn:hover { background: #2563eb; box-shadow: 0 0 16px rgba(59,130,246,0.4); }
+ 
+  /* Tool cards grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+ 
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--glow-blue), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .card:hover { border-color: var(--border-active); transform: translateY(-2px); }
+  .card:hover::before { opacity: 1; }
+  .card.orange { border-color: rgba(249,115,22,0.3); }
+  .card.orange::before { background: linear-gradient(135deg, var(--glow-orange), transparent); }
+  .card.orange:hover { border-color: rgba(249,115,22,0.6); }
+ 
+  .card-icon {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 10px;
+    font-size: 18px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+ 
+  .card-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    position: relative; z-index: 1;
+  }
+  .card-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    position: relative; z-index: 1;
+  }
+ 
+  .card-actions {
+    display: flex; align-items: center; gap: 6px;
+    position: relative; z-index: 1;
+  }
+  .visit-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--text-dim);
+    font-size: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    transition: all 0.2s;
+  }
+  .visit-btn:hover { background: rgba(59,130,246,0.15); color: var(--accent); border-color: rgba(59,130,246,0.3); }
+  .icon-btn {
+    width: 26px; height: 26px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .icon-btn svg { width: 12px; height: 12px; }
+ 
+  /* Add new card */
+  .card-add {
+    background: transparent;
+    border: 1px dashed rgba(59,130,246,0.25);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 8px;
+    color: var(--text-muted);
+    transition: all 0.25s;
+    min-height: 110px;
+  }
+  .card-add:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.05); }
+  .card-add span { font-size: 12px; font-weight: 600; }
+ 
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    width: 440px;
+    max-width: 95vw;
+    animation: modalIn 0.25s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 20px;
+  }
+  .modal label {
+    display: block;
+    font-size: 12px; font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 6px; margin-top: 14px;
+  }
+  .modal input, .modal select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal input:focus, .modal select:focus { border-color: var(--accent); }
+  .modal select option { background: var(--surface); }
+  .modal-actions {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;
+  }
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--text-muted); color: var(--text); }
+  .btn-save {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-save:hover { background: #2563eb; }
+ 
+  /* Notification toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid rgba(59,130,246,0.4);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px; font-weight: 500;
+    z-index: 200;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+ 
+  /* Edit modal */
+  .delete-btn {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 9px 18px;
+    color: #ef4444;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-right: auto;
+  }
+  .delete-btn:hover { background: rgba(239,68,68,0.2); }
+ 
+  /* Fade in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card, .card-add { animation: fadeUp 0.4s ease backwards; }
+</style>
+</head>
+<body>
+ 
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">AI</div>
+  <button class="sidebar-btn active" title="Dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Editor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Tools">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Explore">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Video">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Projects">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Favorites">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+  </button>
+  <button class="sidebar-btn" title="Launches">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+  </button>
+  <button class="sidebar-btn" style="margin-top:auto;" title="Analytics">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  </button>
+</aside>
+ 
+<!-- Main -->
+<div class="main">
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="logo-text"><span>AI</span> Hub</div>
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="globalSearch" placeholder="Search AI Tools (e.g., Midjourney, GitHub Copilot)" oninput="filterTools(this.value)">
+    </div>
+    <div class="topbar-right">
+      <div class="avatar">JD</div>
+    </div>
+  </header>
+ 
+  <!-- Nav tabs -->
+  <nav class="nav-tabs">
+    <div class="tab active" data-filter="all">ALL AI TOOLS</div>
+    <div class="tab" data-filter="editing">EDITING & CREATIVE</div>
+    <div class="tab" data-filter="development">DEVELOPMENT & CODING</div>
+    <div class="tab" data-filter="writing">WRITING & CONTENT</div>
+    <div class="tab" data-filter="video">VIDEO & AUDIO</div>
+    <div class="tab" data-filter="productivity">PRODUCTIVITY</div>
+    <div class="tab" data-filter="marketing">MARKETING</div>
+    <div class="tab" data-filter="datascience">DATA SCIENCE</div>
+  </nav>
+ 
+  <!-- Content -->
+  <div class="content">
+    <div class="all-sections" id="allSections">
+      <!-- Sections rendered by JS -->
+    </div>
+  </div>
+</div>
+ 
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3 id="modalTitle">Add New Tool</h3>
+    <label>Tool Name</label>
+    <input type="text" id="fieldName" placeholder="e.g. ChatGPT">
+    <label>Description</label>
+    <input type="text" id="fieldDesc" placeholder="e.g. AI Chat Assistant">
+    <label>Website URL</label>
+    <input type="text" id="fieldUrl" placeholder="https://...">
+    <label>Category</label>
+    <select id="fieldCategory">
+      <option value="editing">Editing & Creative</option>
+      <option value="development">Development & Coding</option>
+      <option value="video">Video & Audio</option>
+      <option value="writing">Writing & Content</option>
+      <option value="productivity">Productivity</option>
+      <option value="marketing">Marketing</option>
+      <option value="datascience">Data Science</option>
+    </select>
+    <label>Style</label>
+    <select id="fieldStyle">
+      <option value="">Default (blue)</option>
+      <option value="orange">Orange</option>
+    </select>
+    <label>Icon Emoji</label>
+    <input type="text" id="fieldIcon" placeholder="e.g. 🤖" maxlength="4">
+    <div class="modal-actions">
+      <button class="delete-btn" id="deleteBtn" onclick="deleteTool()" style="display:none">Delete</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTool()">Save Tool</button>
+    </div>
+  </div>
+</div>
+ 
+<div class="toast" id="toast"></div>
+ 
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const CATEGORIES = {
+  editing:     { label: 'EDITING & CREATIVE' },
+  development: { label: 'DEVELOPMENT & CODING' },
+  video:       { label: 'VIDEO & AUDIO' },
+  writing:     { label: 'WRITING & CONTENT' },
+  productivity:{ label: 'PRODUCTIVITY' },
+  marketing:   { label: 'MARKETING' },
+  datascience: { label: 'DATA SCIENCE' },
+};
+ 
+const ICON_COLORS = {
+  editing:     ['#e63946','#f4a261','#2a9d8f','#e9c46a','#457b9d','#8338ec'],
+  development: ['#4cc9f0','#4361ee','#7209b7','#f72585','#3a0ca3','#560bad'],
+  video:       ['#06d6a0','#118ab2','#ffd166','#ef476f','#073b4c','#8ecae6'],
+  writing:     ['#90be6d','#f8961e','#f3722c','#f94144','#577590','#43aa8b'],
+  productivity:['#9b5de5','#f15bb5','#fee440','#00bbf9','#00f5d4','#ff99c8'],
+  marketing:   ['#fb5607','#ff006e','#8338ec','#3a86ff','#ffbe0b','#06d6a0'],
+  datascience: ['#38b2ac','#4299e1','#9f7aea','#f6ad55','#fc8181','#68d391'],
+};
+ 
+let tools = [
+  { id:1, name:'MIDJOURNEY',      desc:'AI Art Generation',          cat:'editing',     style:'',       icon:'🎨', url:'https://midjourney.com' },
+  { id:2, name:'Runway Gen-2',    desc:'AI Art Generation',          cat:'editing',     style:'',       icon:'🎬', url:'https://runwayml.com' },
+  { id:3, name:'Adobe Firefly',   desc:'AI Adobe Firefly Tool',      cat:'editing',     style:'orange', icon:'🔥', url:'https://firefly.adobe.com' },
+  { id:4, name:'Topaz Photo AI',  desc:'AI Art Generation',          cat:'editing',     style:'orange', icon:'📸', url:'https://www.topazlabs.com' },
+  { id:5, name:'Runway Gentline', desc:'AI Art Generation',          cat:'editing',     style:'',       icon:'✨', url:'https://runwayml.com' },
+  { id:6, name:'GITHUB COPILOT',  desc:'AI Coding Assistant',        cat:'development', style:'',       icon:'👾', url:'https://copilot.github.com' },
+  { id:7, name:'Cursor AI',       desc:'AI Coding Assistant',        cat:'development', style:'',       icon:'⚡', url:'https://cursor.sh' },
+  { id:8, name:'Tabnine',         desc:'AI Coding Assistant',        cat:'development', style:'orange', icon:'🔷', url:'https://www.tabnine.com' },
+  { id:9, name:'TabbyML',         desc:'Tabby & & Grammar Tool',     cat:'development', style:'orange', icon:'🐱', url:'https://tabby.tabbyml.com' },
+  { id:10,name:'TabbyML Pro',     desc:'AI Coding Assistant & Grammar Tool', cat:'development', style:'',  icon:'💻', url:'https://tabby.tabbyml.com' },
+  { id:11,name:'Synthesia',       desc:'Writing & Grammar Tool',     cat:'video',       style:'',       icon:'🌀', url:'https://www.synthesia.io' },
+  { id:12,name:'ElevenLabs',      desc:'AI ElevenLabs Founded',      cat:'video',       style:'',       icon:'🎙️', url:'https://elevenlabs.io' },
+  { id:13,name:'D-ID',            desc:'AI-ID Leaturer Tool',        cat:'video',       style:'orange', icon:'🎭', url:'https://www.d-id.com' },
+  { id:14,name:'Soundraw',        desc:'AI Soundraw- Flicker',       cat:'video',       style:'orange', icon:'🎵', url:'https://soundraw.io' },
+  { id:15,name:'Clamar Solution', desc:'AI Art.eam Tool',            cat:'video',       style:'',       icon:'🤖', url:'#' },
+  { id:16,name:'Power Training',  desc:'Daduoanit entindum',         cat:'video',       style:'',       icon:'💪', url:'#' },
+];
+let nextId = 17;
+ 
+// ── Render ────────────────────────────────────────────────────────────────────
+let currentFilter = 'all';
+let searchQuery = '';
+ 
+function render() {
+  const container = document.getElementById('allSections');
+  const catKeys = Object.keys(CATEGORIES);
+  let visibleCats = currentFilter === 'all' ? catKeys : [currentFilter];
+ 
+  let html = '';
+  visibleCats.forEach(cat => {
+    let catTools = tools.filter(t => t.cat === cat);
+    if (searchQuery) {
+      catTools = catTools.filter(t =>
+        t.name.toLowerCase().includes(searchQuery) ||
+        t.desc.toLowerCase().includes(searchQuery)
+      );
+    }
+    if (searchQuery && catTools.length === 0) return;
+ 
+    html += `<div class="section">
+      <div class="section-header">
+        <div class="section-title">${CATEGORIES[cat].label}</div>
+        <button class="add-btn" onclick="openAddModal('${cat}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ADD NEW TOOL
+        </button>
+      </div>
+      <div class="cards-grid" id="grid-${cat}">`;
+ 
+    catTools.forEach((tool, i) => {
+      const colors = ICON_COLORS[cat];
+      const bg = colors[tool.id % colors.length];
+      html += cardHTML(tool, bg, i);
+    });
+ 
+    html += `
+        <div class="card-add" onclick="openAddModal('${cat}')" style="animation-delay:${catTools.length * 0.05}s">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>ADD NEW TOOL</span>
+        </div>
+      </div>
+    </div>`;
+  });
+ 
+  container.innerHTML = html || '<div style="color:var(--text-muted);padding:40px;text-align:center;">No tools match your search.</div>';
+ 
+  // Adjust grid columns based on visible categories
+  if (currentFilter !== 'all') {
+    container.style.gridTemplateColumns = '1fr';
+    // wider 3-col cards grid
+    document.querySelectorAll('.cards-grid').forEach(g => g.style.gridTemplateColumns = 'repeat(3,1fr)');
+  } else {
+    container.style.gridTemplateColumns = 'repeat(3,1fr)';
+    document.querySelectorAll('.cards-grid').forEach(g => g.style.gridTemplateColumns = 'repeat(2,1fr)');
+  }
+}
+ 
+function cardHTML(tool, bg, i) {
+  return `<div class="card ${tool.style}" style="animation-delay:${i * 0.05}s" data-id="${tool.id}">
+    <div class="card-icon" style="background:${bg}22; font-size:20px;">${tool.icon}</div>
+    <div class="card-name">${tool.name}</div>
+    <div class="card-desc">${tool.desc}</div>
+    <div class="card-actions">
+      <button class="visit-btn" onclick="visitTool(event,'${tool.url}')">
+        Visit Website
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </button>
+      <button class="icon-btn" onclick="openEditModal(event,${tool.id})" title="Edit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="deleteDirect(event,${tool.id})" title="Delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>
+  </div>`;
+}
+ 
+// ── Modal ─────────────────────────────────────────────────────────────────────
+let editingId = null;
+let addingCat = null;
+ 
+function openAddModal(cat) {
+  editingId = null; addingCat = cat;
+  document.getElementById('modalTitle').textContent = 'Add New Tool';
+  document.getElementById('fieldName').value = '';
+  document.getElementById('fieldDesc').value = '';
+  document.getElementById('fieldUrl').value = '';
+  document.getElementById('fieldCategory').value = cat;
+  document.getElementById('fieldStyle').value = '';
+  document.getElementById('fieldIcon').value = '🤖';
+  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+ 
+function openEditModal(e, id) {
+  e.stopPropagation();
+  const tool = tools.find(t => t.id === id);
+  if (!tool) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Edit Tool';
+  document.getElementById('fieldName').value = tool.name;
+  document.getElementById('fieldDesc').value = tool.desc;
+  document.getElementById('fieldUrl').value = tool.url;
+  document.getElementById('fieldCategory').value = tool.cat;
+  document.getElementById('fieldStyle').value = tool.style;
+  document.getElementById('fieldIcon').value = tool.icon;
+  document.getElementById('deleteBtn').style.display = 'block';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+ 
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+ 
+function saveTool() {
+  const name = document.getElementById('fieldName').value.trim();
+  const desc = document.getElementById('fieldDesc').value.trim();
+  const url  = document.getElementById('fieldUrl').value.trim() || '#';
+  const cat  = document.getElementById('fieldCategory').value;
+  const style= document.getElementById('fieldStyle').value;
+  const icon = document.getElementById('fieldIcon').value.trim() || '🤖';
+  if (!name) { document.getElementById('fieldName').focus(); return; }
+ 
+  if (editingId) {
+    const t = tools.find(t => t.id === editingId);
+    Object.assign(t, { name, desc, url, cat, style, icon });
+    showToast('Tool updated!');
+  } else {
+    tools.push({ id: nextId++, name, desc, url, cat, style, icon });
+    showToast('Tool added!');
+  }
+  closeModal();
+  render();
+}
+ 
+function deleteTool() {
+  tools = tools.filter(t => t.id !== editingId);
+  closeModal();
+  render();
+  showToast('Tool deleted.');
+}
+ 
+function deleteDirect(e, id) {
+  e.stopPropagation();
+  tools = tools.filter(t => t.id !== id);
+  render();
+  showToast('Tool deleted.');
+}
+ 
+function visitTool(e, url) {
+  e.stopPropagation();
+  if (url && url !== '#') window.open(url, '_blank');
+  else showToast('No URL configured.');
+}
+ 
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    render();
+  });
+});
+ 
+// ── Sidebar buttons ───────────────────────────────────────────────────────────
+document.querySelectorAll('.sidebar-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+ 
+// ── Search ────────────────────────────────────────────────────────────────────
+function filterTools(val) {
+  searchQuery = val.toLowerCase().trim();
+  render();
+}
+ 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+ 
+// ── Close modal on overlay click ──────────────────────────────────────────────
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+ 
+// ── Init ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
